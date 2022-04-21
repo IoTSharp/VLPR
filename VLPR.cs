@@ -4,12 +4,12 @@ using System.Drawing;
 using System.IO;
 using System.Net.Sockets;
 using System.Net;
- 
-public class VLPR : IDisposable
+
+internal class VLPR : IDisposable
 {
     private string _lib = "libvlpr.so";
     private IntPtr _dllHnd;
-     public _VPR_Init VPR_Init;
+    public _VPR_Init VPR_Init;
     public _VPR_InitEx VPR_InitEx;
     public _VPR_Quit VPR_Quit;
     public _VPR_Capture VPR_Capture;
@@ -32,10 +32,10 @@ public class VLPR : IDisposable
 
     public delegate int _VPR_SetEventCallBackFunc(VPR_EventHandle cb);
 
-    private VPR_EventHandle eventHandle=null;
-    public VLPR (VLPRConfig  setting)
+    private VPR_EventHandle eventHandle = null;
+    public VLPR(VLPRConfig setting)
     {
-          _lib = setting.Provider;
+        _lib = setting.Provider;
         _setting = setting;
         _dllHnd = NativeLibrary.Load(_lib);
         if (_dllHnd != IntPtr.Zero)
@@ -45,13 +45,13 @@ public class VLPR : IDisposable
         }
         else
         {
-            Console.WriteLine($"未能加载{_lib}");
+            throw new Exception($"无法加载{setting.Provider}");
         }
-        
+
     }
 
     public string Name { get => _setting.Name; }
-    public string IPAddress { get  =>_setting.IPAddress;   }
+    public string IPAddress { get => _setting.IPAddress; }
     public bool Init()
     {
         IntPtr _ipaddress = Marshal.StringToCoTaskMemAnsi(_setting.IPAddress);
@@ -73,7 +73,6 @@ public class VLPR : IDisposable
     public event EventHandler<VehicleInfo> FoundVehicle;
     public void EventHandle()
     {
-        Console.WriteLine("EventHandle");
         IntPtr chImage = Marshal.AllocHGlobal(1024 * 1024 * 2);
         IntPtr chTwo = Marshal.AllocHGlobal(128);
         IntPtr chPlate = Marshal.AllocHGlobal(64);
@@ -81,24 +80,24 @@ public class VLPR : IDisposable
         IntPtr piJpegLen = Marshal.AllocHGlobal(4);
         IntPtr iPlateColor = Marshal.AllocHGlobal(10);
         bool bRet = false;
-        bRet = VPR_GetVehicleInfo(chPlate, iPlateColor, piBinLen, chTwo, piJpegLen,  chImage);
+        bRet = VPR_GetVehicleInfo(chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
         if (bRet == true)
         {
-         
+
             int jpeglen = Marshal.ReadInt32(piJpegLen);
             int platecolor = Marshal.ReadByte(iPlateColor);
             int binlen = Marshal.ReadInt32(piBinLen);
-            byte[] buffer = new byte[10] ;
+            byte[] buffer = new byte[10];
             Marshal.Copy(chPlate, buffer, 0, 10);
-           var   plate=System.Text.Encoding.GetEncoding(936).GetString(buffer);
+            var plate = System.Text.Encoding.GetEncoding(936).GetString(buffer);
             byte[] imgbuff = new byte[jpeglen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             byte[] twobuff = new byte[binlen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             Marshal.Copy(chTwo, twobuff, 0, binlen);
-            FoundVehicle?.Invoke(this,  new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff) {  VLPRName= Name });
+            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff) { VLPRName = Name });
         }
-        Marshal.FreeHGlobal( chImage);
+        Marshal.FreeHGlobal(chImage);
         Marshal.FreeHGlobal(chTwo);
         Marshal.FreeHGlobal(chPlate);
         Marshal.FreeHGlobal(piBinLen);
@@ -106,7 +105,7 @@ public class VLPR : IDisposable
         Marshal.FreeHGlobal(iPlateColor);
     }
 
-    public  bool  Capture()
+    public bool Capture()
     {
         return VPR_Capture();
     }
@@ -114,7 +113,7 @@ public class VLPR : IDisposable
 
     public bool CheckStatus()
     {
-       var  check = false;
+        var check = false;
         if (_dllHnd != IntPtr.Zero && VPR_CheckStatus != null && VPR_InitEx != null)
         {
             IntPtr ptrstatus = Marshal.AllocHGlobal(128);
@@ -122,7 +121,7 @@ public class VLPR : IDisposable
             {
                 Init();
             }
-              check = VPR_CheckStatus(ptrstatus);
+            check = VPR_CheckStatus(ptrstatus);
             if (check == false)
             {
                 _isinit = false;
@@ -135,6 +134,6 @@ public class VLPR : IDisposable
     public void Dispose()
     {
         NativeLibrary.UnLoad(_dllHnd);
-        FoundVehicle=null;
+        FoundVehicle = null;
     }
 }

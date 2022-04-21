@@ -1,16 +1,16 @@
-﻿ 
+﻿
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
-public static class NativeLibrary
+internal static class NativeLibrary
 {
     #region DllImport
     [DllImport("kernel32.dll")]
     private static extern IntPtr LoadLibrary(string filename);
 
     [DllImport("kernel32.dll")]
-    private static extern bool  FreeLibrary(IntPtr hModule);
-    
+    private static extern bool FreeLibrary(IntPtr hModule);
+
 
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetProcAddress(IntPtr hModule, string procname);
@@ -58,9 +58,9 @@ public static class NativeLibrary
     {
 
         if (__linux__)
-               dlclose(mHnd);
+            dlclose(mHnd);
         else
-             FreeLibrary(mHnd);
+            FreeLibrary(mHnd);
     }
     public static IntPtr Symbol(IntPtr mHnd, string symbol)
     {
