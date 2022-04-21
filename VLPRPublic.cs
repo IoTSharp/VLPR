@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -50,12 +51,12 @@ public class VLPRConfig
 }
 
 
-public class VLPROptions
+public class VLPROptions 
 {
     /// <summary>
     /// 车牌识别配置列表
     /// </summary>
-    public  List<VLPRConfig> VLPRConfigs { get; set; }
+    public  List<VLPRConfig> VLPRConfigs { get; set; } = new List<VLPRConfig>();
     /// <summary>
     /// 检查车牌识别状态的时间间隔
     /// </summary>
@@ -65,6 +66,7 @@ public class VLPROptions
     /// 接口为建议协议， 不支持多相机
     /// </summary>
     public bool EasyVLPR { get; set; } = false;
+
 }
 
 public class VehicleQueue : BlockingCollection<VehicleInfo>
@@ -84,5 +86,16 @@ public class VehicleQueue : BlockingCollection<VehicleInfo>
     public bool  Capture(string name)
     {
         return (bool)(HCapture?.Invoke(name));
+    }
+    internal  Action HSetQueue { get; set; }
+    internal Action<EventHandler<VehicleInfo>> HSetEvent { get;   set; }
+
+    internal void SetQueue()
+    {
+        HSetQueue?.Invoke();
+    }
+    internal void SetEvent(EventHandler<VehicleInfo> handler)
+    {
+        HSetEvent?.Invoke(handler);
     }
 }

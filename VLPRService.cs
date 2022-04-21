@@ -1,17 +1,9 @@
-﻿
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.IO;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
-internal class VLPRService : BackgroundService
+ 
+public class VLPRService : BackgroundService
 {
     private readonly VLPROptions _setting;
     private readonly Dictionary<VLPRConfig, IVLPR> _vprs = new Dictionary<VLPRConfig, IVLPR>();
@@ -39,10 +31,12 @@ internal class VLPRService : BackgroundService
         this.queue = queue;
         queue._vprs= _vprs;
         queue.HCapture = Capture;
+        queue.HSetQueue = SetQueue;
+        queue.HSetEvent = SetEvent;
     }
     internal bool Capture(string name)
     {
-        return true;
+        return  _vprs.FirstOrDefault(f => f.Key.Name == name).Value.Capture();
     }
     /// <summary>
     /// 设置使用事件
@@ -69,7 +63,7 @@ internal class VLPRService : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        return Task.Run(() =>
+        return Task.Run(async () =>
         {
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -79,7 +73,7 @@ internal class VLPRService : BackgroundService
                     var vpr = item.Value;
                     var status = vpr.CheckStatus();
                 });
-                Thread.Sleep(TimeSpan.FromSeconds(_setting.Interval < 10 ? 10 : _setting.Interval));
+               await Task.Delay (TimeSpan.FromSeconds(_setting.Interval < 10 ? 10 : _setting.Interval));
             }
         });
     }

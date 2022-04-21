@@ -49,32 +49,49 @@ internal class VLPR : IDisposable, IVLPR
           _username = Marshal.StringToCoTaskMemAnsi(_setting.UserName);
           _password = Marshal.StringToCoTaskMemAnsi(_setting.Password);
           _name = Marshal.StringToCoTaskMemAnsi(_setting.Name);
-        _dllHnd = NativeLibrary.Load(_lib);
-        if (_dllHnd != IntPtr.Zero)
-        {
-            NativeLibrary.LinkAllDelegates(this, _dllHnd);
-            eventHandle = new VPR_EventHandle(EventHandle);
-        }
-        else
-        {
-            throw new Exception($"无法加载{setting.Provider}");
-        }
+      
 
     }
 
     public string Name { get => _setting.Name; }
     public long  Handle { get; private set; }
     public string IPAddress { get => _setting.IPAddress; }
-    public bool  Init()
+    public bool  Load()
     {
-     
-        var Handle = VPR_InitEx(_ipaddress, _username, _password, 5000);
-        int rest = 0;
-        if (Handle > 1)
+        _dllHnd = NativeLibrary.Load(_lib);
+        if (_dllHnd != IntPtr.Zero)
         {
-              rest = VPR_SetEventCallBackFunc(Handle, eventHandle,_name);
+            NativeLibrary.LinkAllDelegates(this, _dllHnd);
+            eventHandle = new VPR_EventHandle(EventHandle);
+            Console.Write("加载动态库成功");
         }
-        _isinit = Handle > 1 && rest>=1;
+        else
+        {
+            Console.Write($"无法加载{_lib}");
+            throw new Exception($"无法加载{_lib}");
+        }
+        if (_dllHnd != IntPtr.Zero && VPR_InitEx!=null && VPR_SetEventCallBackFunc!=null && VPR_GetVehicleInfo!=null && VPR_Capture!=null)
+        {
+            Console.Write("开始初始化");
+              Handle = VPR_InitEx(_ipaddress, _username, _password, 5000);
+            int rest = 0;
+            if (Handle > 1)
+            {
+                Console.Write("初始化成功，开始设置回调");
+                rest = VPR_SetEventCallBackFunc(Handle, eventHandle, _name);
+                Console.Write($"设置回调完成{rest}");
+            }
+            else
+            {
+                Console.Write($"初始化失败{Handle}");
+            }
+            _isinit = Handle > 1 && rest >= 1;
+        }
+        else
+        {
+            Console.Write($"关键函数未实现");
+            throw new Exception($"关键函数未实现");
+        }
         return _isinit;
     }
 
@@ -89,10 +106,11 @@ internal class VLPR : IDisposable, IVLPR
         IntPtr piJpegLen = Marshal.AllocHGlobal(4);
         IntPtr iPlateColor = Marshal.AllocHGlobal(10);
         bool bRet = false;
+        Console.Write($"{Name}({Handle}，{handle})收到车牌");
         bRet = VPR_GetVehicleInfo(Handle,chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
         if (bRet == true)
         {
-
+            Console.Write($"{Name}({Handle}，{handle})收到车牌{chPlate}");
             int jpeglen = Marshal.ReadInt32(piJpegLen);
             int platecolor = Marshal.ReadByte(iPlateColor);
             int binlen = Marshal.ReadInt32(piBinLen);
@@ -105,6 +123,7 @@ internal class VLPR : IDisposable, IVLPR
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             Marshal.Copy(chTwo, twobuff, 0, binlen);
             FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff,Name,handle));
+            Console.Write($"{Name}({Handle}，{handle})时间触发完成");
         }
         Marshal.FreeHGlobal(chImage);
         Marshal.FreeHGlobal(chTwo);
@@ -116,6 +135,7 @@ internal class VLPR : IDisposable, IVLPR
 
     public bool Capture()
     {
+        Console.Write($"{Name}({Handle})开始抓拍");
         return VPR_Capture(Handle);
     }
     bool _isinit = false;
@@ -123,23 +143,29 @@ internal class VLPR : IDisposable, IVLPR
     public bool CheckStatus()
     {
         var check = false;
-        if (_dllHnd != IntPtr.Zero && VPR_CheckStatus != null && VPR_InitEx != null)
+        Console.Write($"{Name}({Handle})开始检查状态");
+        IntPtr ptrstatus = Marshal.AllocHGlobal(128);
+        if (_dllHnd == IntPtr.Zero || !_isinit)
         {
-            IntPtr ptrstatus = Marshal.AllocHGlobal(128);
-            if (_isinit == false)
-            {
-                Init();
-            }
-            check = VPR_CheckStatus(Handle,ptrstatus);
+            Console.Write($"{Name}({Handle})未初始化");
+            Load();
+        }
+        if (VPR_CheckStatus != null)
+        {
+            check = VPR_CheckStatus(Handle, ptrstatus);
+            Console.Write($"{Name}({Handle})状态{check}");
             if (check == false)
             {
                 _isinit = false;
             }
-            Marshal.FreeHGlobal(ptrstatus);
         }
+        Marshal.FreeHGlobal(ptrstatus);
         return check;
     }
-
+    public void Unload()
+    {
+        Dispose();
+    }
     public void Dispose()
     {
         Marshal.FreeCoTaskMem(_ipaddress);

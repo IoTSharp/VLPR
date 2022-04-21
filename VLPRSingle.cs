@@ -57,7 +57,7 @@ internal class VLPRSingle : IDisposable, IVLPR
 
     public string Name { get => _setting.Name; }
     public string IPAddress { get => _setting.IPAddress; }
-    public bool Init()
+    public bool Load()
     {
         IntPtr _ipaddress = Marshal.StringToCoTaskMemAnsi(_setting.IPAddress);
         IntPtr _username = Marshal.StringToCoTaskMemAnsi(_setting.UserName);
@@ -124,7 +124,7 @@ internal class VLPRSingle : IDisposable, IVLPR
             IntPtr ptrstatus = Marshal.AllocHGlobal(128);
             if (_isinit == false)
             {
-                Init();
+                Load();
             }
             check = VPR_CheckStatus(ptrstatus);
             if (check == false)
