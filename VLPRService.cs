@@ -14,17 +14,28 @@ using System.Runtime.InteropServices;
 internal class VLPRService : BackgroundService
 {
     private readonly VLPROptions _setting;
-    private readonly Dictionary<VLPRConfig, VLPR> _vprs = new Dictionary<VLPRConfig, VLPR>();
+    private readonly Dictionary<VLPRConfig, IVLPR> _vprs = new Dictionary<VLPRConfig, IVLPR>();
     private readonly VehicleQueue queue;
 
     public VLPRService(IOptions<VLPROptions> options, VehicleQueue queue)
     {
         _setting = options.Value;
-        _setting.VLPRConfigs.ForEach(cfg =>
+        if (_setting.EasyVLPR)
         {
-            var vlpr = new VLPR(cfg);
-            _vprs.Add(cfg, vlpr);
-        });
+            _setting.VLPRConfigs.ForEach(cfg =>
+            {
+                var vlpr = new VLPRSingle(cfg);
+                _vprs.Add(cfg, vlpr);
+            });
+        }
+        else
+        {
+            _setting.VLPRConfigs.ForEach(cfg =>
+            {
+                var vlpr = new VLPR(cfg);
+                _vprs.Add(cfg, vlpr);
+            });
+        }
         this.queue = queue;
         queue._vprs= _vprs;
         queue.HCapture = Capture;

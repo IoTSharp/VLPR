@@ -40,12 +40,17 @@ public class VLPROptions
     /// <summary>
     /// 检查车牌识别状态的时间间隔
     /// </summary>
-    public double Interval { get;  set; }
+    public double Interval { get; set; } = 120;
+
+    /// <summary>
+    /// 接口为建议协议， 不支持多相机
+    /// </summary>
+    public bool EasyVLPR { get; set; } = false;
 }
 
 public class VehicleQueue : BlockingCollection<VehicleInfo>
 {
-    internal Dictionary<VLPRConfig, VLPR> _vprs;
+    internal Dictionary<VLPRConfig, IVLPR> _vprs;
 
     public VehicleQueue() : base(new ConcurrentQueue<VehicleInfo>())
     {

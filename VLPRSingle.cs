@@ -6,9 +6,9 @@ using System.Net.Sockets;
 using System.Net;
 
 /// <summary>
-/// 多车牌识别
+/// 单实例车牌识别
 /// </summary>
-internal class VLPR : IDisposable, IVLPR
+internal class VLPRSingle : IDisposable, IVLPR
 {
     private string _lib = "libvlpr.so";
     private IntPtr _dllHnd;
@@ -24,21 +24,21 @@ internal class VLPR : IDisposable, IVLPR
     private readonly VLPRConfig _setting;
 
 
-    public delegate long  _VPR_Init(int uPort, int nHWYPort, IntPtr chDevIp);
-    public delegate long  _VPR_InitEx(IntPtr capIpAddress, IntPtr username, IntPtr password, int uPort);
-    public delegate long _VPR_Quit(long handle);
+    public delegate bool _VPR_Init(int uPort, int nHWYPort, IntPtr chDevIp);
+    public delegate bool _VPR_InitEx(IntPtr capIpAddress, IntPtr username, IntPtr password, int uPort);
+    public delegate bool _VPR_Quit();
 
-    public delegate bool _VPR_Capture(long handle);
+    public delegate bool _VPR_Capture();
 
-    public delegate bool _VPR_GetVehicleInfo(long handle,IntPtr pchPlate, IntPtr iPlateColor, IntPtr piByteBinImagLen, IntPtr pByteBinImage, IntPtr piJpegImageLen, IntPtr pByteJpegImage);
+    public delegate bool _VPR_GetVehicleInfo(IntPtr pchPlate, IntPtr iPlateColor, IntPtr piByteBinImagLen, IntPtr pByteBinImage, IntPtr piJpegImageLen, IntPtr pByteJpegImage);
 
-    public delegate bool _VPR_CheckStatus(long handle,IntPtr chVprDevStatus);
+    public delegate bool _VPR_CheckStatus(IntPtr chVprDevStatus);
     public delegate void VPR_EventHandle();
 
-    public delegate int _VPR_SetEventCallBackFunc(long handle,VPR_EventHandle cb);
+    public delegate int _VPR_SetEventCallBackFunc(VPR_EventHandle cb);
 
     private VPR_EventHandle eventHandle = null;
-    public VLPR(VLPRConfig setting)
+    public VLPRSingle(VLPRConfig setting)
     {
         _lib = setting.Provider;
         _setting = setting;
@@ -56,38 +56,36 @@ internal class VLPR : IDisposable, IVLPR
     }
 
     public string Name { get => _setting.Name; }
-    public long  Handle { get; private set; }
     public string IPAddress { get => _setting.IPAddress; }
-    public bool  Init()
+    public bool Init()
     {
         IntPtr _ipaddress = Marshal.StringToCoTaskMemAnsi(_setting.IPAddress);
         IntPtr _username = Marshal.StringToCoTaskMemAnsi(_setting.UserName);
         IntPtr _password = Marshal.StringToCoTaskMemAnsi(_setting.Password);
-        var Handle = VPR_InitEx(_ipaddress, _username, _password, 5000);
-        int rest = 0;
-        if (Handle > 1)
+        var init = VPR_InitEx(_ipaddress, _username, _password, 5000);
+        if (init)
         {
-              rest = VPR_SetEventCallBackFunc(Handle, eventHandle);
+            int rest = VPR_SetEventCallBackFunc(eventHandle);
         }
         Marshal.FreeCoTaskMem(_ipaddress);
         Marshal.FreeCoTaskMem(_username);
         Marshal.FreeCoTaskMem(_password);
-        _isinit = Handle > 1 && rest>=1;
-        return _isinit;
+        _isinit = init;
+        return init;
     }
 
 
     public event EventHandler<VehicleInfo> FoundVehicle;
     public void EventHandle()
     {
-        IntPtr chImage = Marshal.AllocHGlobal(1024 * 1024 * 10);
-        IntPtr chTwo = Marshal.AllocHGlobal(1024);
-        IntPtr chPlate = Marshal.AllocHGlobal(1024);
+        IntPtr chImage = Marshal.AllocHGlobal(1024 * 1024 * 2);
+        IntPtr chTwo = Marshal.AllocHGlobal(128);
+        IntPtr chPlate = Marshal.AllocHGlobal(64);
         IntPtr piBinLen = Marshal.AllocHGlobal(4);
         IntPtr piJpegLen = Marshal.AllocHGlobal(4);
         IntPtr iPlateColor = Marshal.AllocHGlobal(10);
         bool bRet = false;
-        bRet = VPR_GetVehicleInfo(Handle,chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
+        bRet = VPR_GetVehicleInfo(chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
         if (bRet == true)
         {
 
@@ -114,7 +112,7 @@ internal class VLPR : IDisposable, IVLPR
 
     public bool Capture()
     {
-        return VPR_Capture(Handle);
+        return VPR_Capture();
     }
     bool _isinit = false;
 
@@ -128,7 +126,7 @@ internal class VLPR : IDisposable, IVLPR
             {
                 Init();
             }
-            check = VPR_CheckStatus(Handle,ptrstatus);
+            check = VPR_CheckStatus(ptrstatus);
             if (check == false)
             {
                 _isinit = false;
@@ -140,8 +138,8 @@ internal class VLPR : IDisposable, IVLPR
 
     public void Dispose()
     {
-        VPR_Quit(Handle);
         NativeLibrary.UnLoad(_dllHnd);
         FoundVehicle = null;
+        VPR_Quit();
     }
 }
