@@ -100,7 +100,7 @@ internal class VLPRSingle : IDisposable, IVLPR
             byte[] twobuff = new byte[binlen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             Marshal.Copy(chTwo, twobuff, 0, binlen);
-            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff) { VLPRName = Name });
+            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff,Name, Environment.CurrentManagedThreadId) );
         }
         Marshal.FreeHGlobal(chImage);
         Marshal.FreeHGlobal(chTwo);

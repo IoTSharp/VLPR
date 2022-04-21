@@ -11,6 +11,7 @@ using System.Net;
 internal class VLPR : IDisposable, IVLPR
 {
     private string _lib = "libvlpr.so";
+
     private IntPtr _dllHnd;
 #pragma warning disable 0649
     public _VPR_Init VPR_Init;
@@ -22,8 +23,10 @@ internal class VLPR : IDisposable, IVLPR
     public _VPR_SetEventCallBackFunc VPR_SetEventCallBackFunc;
 #pragma warning restore 0649
     private readonly VLPRConfig _setting;
-
-
+    private   IntPtr _ipaddress;
+    private   IntPtr _username;
+    private   IntPtr _password;
+    private IntPtr _name;
     public delegate long  _VPR_Init(int uPort, int nHWYPort, IntPtr chDevIp);
     public delegate long  _VPR_InitEx(IntPtr capIpAddress, IntPtr username, IntPtr password, int uPort);
     public delegate long _VPR_Quit(long handle);
@@ -33,15 +36,19 @@ internal class VLPR : IDisposable, IVLPR
     public delegate bool _VPR_GetVehicleInfo(long handle,IntPtr pchPlate, IntPtr iPlateColor, IntPtr piByteBinImagLen, IntPtr pByteBinImage, IntPtr piJpegImageLen, IntPtr pByteJpegImage);
 
     public delegate bool _VPR_CheckStatus(long handle,IntPtr chVprDevStatus);
-    public delegate void VPR_EventHandle();
+    public delegate void VPR_EventHandle(long handle,IntPtr userData);
 
-    public delegate int _VPR_SetEventCallBackFunc(long handle,VPR_EventHandle cb);
+    public delegate int _VPR_SetEventCallBackFunc(long handle,VPR_EventHandle cb, IntPtr userData);
 
     private VPR_EventHandle eventHandle = null;
     public VLPR(VLPRConfig setting)
     {
         _lib = setting.Provider;
         _setting = setting;
+          _ipaddress = Marshal.StringToCoTaskMemAnsi(_setting.IPAddress);
+          _username = Marshal.StringToCoTaskMemAnsi(_setting.UserName);
+          _password = Marshal.StringToCoTaskMemAnsi(_setting.Password);
+          _name = Marshal.StringToCoTaskMemAnsi(_setting.Name);
         _dllHnd = NativeLibrary.Load(_lib);
         if (_dllHnd != IntPtr.Zero)
         {
@@ -60,25 +67,20 @@ internal class VLPR : IDisposable, IVLPR
     public string IPAddress { get => _setting.IPAddress; }
     public bool  Init()
     {
-        IntPtr _ipaddress = Marshal.StringToCoTaskMemAnsi(_setting.IPAddress);
-        IntPtr _username = Marshal.StringToCoTaskMemAnsi(_setting.UserName);
-        IntPtr _password = Marshal.StringToCoTaskMemAnsi(_setting.Password);
+     
         var Handle = VPR_InitEx(_ipaddress, _username, _password, 5000);
         int rest = 0;
         if (Handle > 1)
         {
-              rest = VPR_SetEventCallBackFunc(Handle, eventHandle);
+              rest = VPR_SetEventCallBackFunc(Handle, eventHandle,_name);
         }
-        Marshal.FreeCoTaskMem(_ipaddress);
-        Marshal.FreeCoTaskMem(_username);
-        Marshal.FreeCoTaskMem(_password);
         _isinit = Handle > 1 && rest>=1;
         return _isinit;
     }
 
 
     public event EventHandler<VehicleInfo> FoundVehicle;
-    public void EventHandle()
+    private void EventHandle(long handle, IntPtr userData)
     {
         IntPtr chImage = Marshal.AllocHGlobal(1024 * 1024 * 10);
         IntPtr chTwo = Marshal.AllocHGlobal(1024);
@@ -102,7 +104,7 @@ internal class VLPR : IDisposable, IVLPR
             byte[] twobuff = new byte[binlen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             Marshal.Copy(chTwo, twobuff, 0, binlen);
-            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff) { VLPRName = Name });
+            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff,Name,handle));
         }
         Marshal.FreeHGlobal(chImage);
         Marshal.FreeHGlobal(chTwo);
@@ -140,6 +142,10 @@ internal class VLPR : IDisposable, IVLPR
 
     public void Dispose()
     {
+        Marshal.FreeCoTaskMem(_ipaddress);
+        Marshal.FreeCoTaskMem(_username);
+        Marshal.FreeCoTaskMem(_password);
+        Marshal.FreeCoTaskMem(_name);
         VPR_Quit(Handle);
         NativeLibrary.UnLoad(_dllHnd);
         FoundVehicle = null;

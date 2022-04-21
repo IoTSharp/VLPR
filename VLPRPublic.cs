@@ -9,15 +9,34 @@ public class VehicleInfo
     {
 
     }
-    public VehicleInfo(string plate, byte[] imgbuff, byte[] twobuff)
+    internal VehicleInfo(string plate, byte[] imgbuff, byte[] twobuff, string name, long handle)
     {
         VehicleId = plate;
         Image = imgbuff;
         TwoBin = twobuff;
+        Name = name;
+        Handle = handle;
     }
-    public string VLPRName { get; set; }
+
+    /// <summary>
+    /// 车牌识别名称
+    /// </summary>
+    public string Name { get; set; }
+    /// <summary>
+    /// 车牌识别句柄
+    /// </summary>
+    public long Handle { get; }
+    /// <summary>
+    /// 车牌识别号码
+    /// </summary>
     public string VehicleId { get; set; }
+    /// <summary>
+    /// 原始大图
+    /// </summary>
     public byte[] Image { get; set; }
+    /// <summary>
+    /// 二值化图像
+    /// </summary>
     public byte[] TwoBin { get; set; }
 }
 public class VLPRConfig

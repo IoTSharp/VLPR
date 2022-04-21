@@ -9,6 +9,5 @@ internal interface IVLPR
     bool Capture();
     bool CheckStatus();
     void Dispose();
-    void EventHandle();
     bool Init();
 }
