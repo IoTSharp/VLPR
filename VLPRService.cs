@@ -1,15 +1,12 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System.Runtime.CompilerServices;
-
- 
 public class VLPRService : BackgroundService
 {
     private readonly VLPROptions _setting;
     private readonly Dictionary<VLPRConfig, IVLPR> _vprs = new Dictionary<VLPRConfig, IVLPR>();
-    private readonly VehicleQueue queue;
+    private readonly VLPRClient _client;
 
-    public VLPRService(IOptions<VLPROptions> options, VehicleQueue queue)
+    public VLPRService(IOptions<VLPROptions> options, VLPRClient client)
     {
         _setting = options.Value;
         if (_setting.EasyVLPR)
@@ -17,6 +14,7 @@ public class VLPRService : BackgroundService
             _setting.VLPRConfigs.ForEach(cfg =>
             {
                 var vlpr = new VLPRSingle(cfg);
+                vlpr.FoundVehicle += _client.Vlpr_FoundVehicle;
                 _vprs.Add(cfg, vlpr);
             });
         }
@@ -25,40 +23,17 @@ public class VLPRService : BackgroundService
             _setting.VLPRConfigs.ForEach(cfg =>
             {
                 var vlpr = new VLPR(cfg);
+                vlpr.FoundVehicle += _client.Vlpr_FoundVehicle;
                 _vprs.Add(cfg, vlpr);
             });
         }
-        this.queue = queue;
-        queue._vprs= _vprs;
-        queue.HCapture = Capture;
-        queue.HSetQueue = SetQueue;
-        queue.HSetEvent = SetEvent;
+        _client = client;
+        _client.HCapture = Capture;
     }
-    internal bool Capture(string name)
+  
+    private bool Capture(string name)
     {
         return  _vprs.FirstOrDefault(f => f.Key.Name == name).Value.Capture();
-    }
-    /// <summary>
-    /// 设置使用事件
-    /// </summary>
-    /// <param name="handler"></param>
-    internal void SetEvent(EventHandler<VehicleInfo> handler)
-    {
-        _vprs.ToList().ForEach(item =>
-        {
-            item.Value.FoundVehicle += handler;
-        });
-    }
-    /// <summary>
-    /// 设置使用队列
-    /// </summary>
-    internal void SetQueue()
-    {
-        SetEvent(VPRService_handler);
-    }
-    private void VPRService_handler(object sender, VehicleInfo e)
-    {
-        queue.TryAdd(e);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)

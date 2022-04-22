@@ -69,15 +69,8 @@ public class VLPROptions
 
 }
 
-public class VehicleQueue : BlockingCollection<VehicleInfo>
+public class VLPRClient  
 {
-    internal Dictionary<VLPRConfig, IVLPR> _vprs;
-
-    public VehicleQueue() : base(new ConcurrentQueue<VehicleInfo>())
-    {
-
-    }
-
     internal Func<string, bool> HCapture { get;  set; }
     /// <summary>
     /// 抓拍
@@ -87,15 +80,9 @@ public class VehicleQueue : BlockingCollection<VehicleInfo>
     {
         return (bool)(HCapture?.Invoke(name));
     }
-    internal  Action HSetQueue { get; set; }
-    internal Action<EventHandler<VehicleInfo>> HSetEvent { get;   set; }
-
-    internal void SetQueue()
+    public event EventHandler<VehicleInfo> FoundVehicle;
+    internal void Vlpr_FoundVehicle(object? sender, VehicleInfo e)
     {
-        HSetQueue?.Invoke();
-    }
-    internal void SetEvent(EventHandler<VehicleInfo> handler)
-    {
-        HSetEvent?.Invoke(handler);
+        FoundVehicle?.Invoke(sender, e);
     }
 }

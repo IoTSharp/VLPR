@@ -16,24 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddOptions<VLPROptions>().BindConfiguration(nameof(VLPROptions));
             services.AddHostedService<VLPRService>();
-            services.AddSingleton<VehicleQueue>();
-        }
-
-        /// <summary>
-        /// 通过依赖注入取得 VehicleQueue queue ，用TryTake 来获取新车牌。 
-        /// </summary>
-        /// <param name="app"></param>
-        public static void UseVLPRByEvent(this IApplicationBuilder app, EventHandler<VehicleInfo> handler)
-        {
-            app.ApplicationServices.GetService<VehicleQueue>().SetEvent(handler);
-        }
-        /// <summary>
-        /// 通过依赖注入取得 VehicleQueue queue ，用TryTake 来获取新车牌。 
-        /// </summary>
-        /// <param name="app"></param>
-        public static void UseVLPRByQueue(this IApplicationBuilder app)
-        {
-            app.ApplicationServices.GetService<VehicleQueue>().SetQueue();
+            services.AddSingleton<VLPRClient>();
         }
     }
 }
