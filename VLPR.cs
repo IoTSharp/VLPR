@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Net.Sockets;
 using System.Net;
+using System.Diagnostics;
 
 /// <summary>
 /// 多车牌识别
@@ -68,7 +69,6 @@ internal class VLPR : IDisposable, IVLPR
         else
         {
             Console.Write($"无法加载{_lib}");
-            throw new Exception($"无法加载{_lib}");
         }
         if (_dllHnd != IntPtr.Zero && VPR_InitEx!=null && VPR_SetEventCallBackFunc!=null && VPR_GetVehicleInfo!=null && VPR_Capture!=null)
         {
@@ -90,7 +90,6 @@ internal class VLPR : IDisposable, IVLPR
         else
         {
             Console.Write($"关键函数未实现");
-            throw new Exception($"关键函数未实现");
         }
         return _isinit;
     }
@@ -106,11 +105,11 @@ internal class VLPR : IDisposable, IVLPR
         IntPtr piJpegLen = Marshal.AllocHGlobal(4);
         IntPtr iPlateColor = Marshal.AllocHGlobal(10);
         bool bRet = false;
-        Console.Write($"{Name}({Handle}，{handle})收到车牌");
+        Debug.WriteLine($"{Name}({Handle}，{handle})收到车牌");
         bRet = VPR_GetVehicleInfo(Handle,chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
         if (bRet == true)
         {
-            Console.Write($"{Name}({Handle}，{handle})收到车牌{chPlate}");
+            Debug.WriteLine($"{Name}({Handle}，{handle})收到车牌{chPlate}");
             int jpeglen = Marshal.ReadInt32(piJpegLen);
             int platecolor = Marshal.ReadByte(iPlateColor);
             int binlen = Marshal.ReadInt32(piBinLen);
@@ -122,8 +121,11 @@ internal class VLPR : IDisposable, IVLPR
             byte[] twobuff = new byte[binlen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             Marshal.Copy(chTwo, twobuff, 0, binlen);
-            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff,Name,handle));
-            Console.Write($"{Name}({Handle}，{handle})时间触发完成");
+            Task.Run(() =>
+            {
+                FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle));
+            });
+            Debug.WriteLine($"{Name}({Handle}，{handle})时间触发完成");
         }
         Marshal.FreeHGlobal(chImage);
         Marshal.FreeHGlobal(chTwo);
@@ -135,7 +137,7 @@ internal class VLPR : IDisposable, IVLPR
 
     public bool Capture()
     {
-        Console.Write($"{Name}({Handle})开始抓拍");
+        Debug.WriteLine($"{Name}({Handle})开始抓拍");
         return VPR_Capture(Handle);
     }
     bool _isinit = false;
@@ -143,7 +145,7 @@ internal class VLPR : IDisposable, IVLPR
     public bool CheckStatus()
     {
         var check = false;
-        Console.Write($"{Name}({Handle})开始检查状态");
+        Debug.WriteLine($"{Name}({Handle})开始检查状态");
         IntPtr ptrstatus = Marshal.AllocHGlobal(128);
         if (_dllHnd == IntPtr.Zero || !_isinit)
         {
@@ -153,7 +155,7 @@ internal class VLPR : IDisposable, IVLPR
         if (VPR_CheckStatus != null)
         {
             check = VPR_CheckStatus(Handle, ptrstatus);
-            Console.Write($"{Name}({Handle})状态{check}");
+            Debug.WriteLine($"{Name}({Handle})状态{check}");
             if (check == false)
             {
                 _isinit = false;

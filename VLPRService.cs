@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
+
 public class VLPRService : BackgroundService
 {
     private readonly VLPROptions _setting;
@@ -47,7 +49,14 @@ public class VLPRService : BackgroundService
                 {
                     var cfg = item.Key;
                     var vpr = item.Value;
-                    var status = vpr.CheckStatus();
+                    try
+                    {
+                        var status = vpr.CheckStatus();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                    }
                 });
                await Task.Delay (TimeSpan.FromSeconds(_setting.Interval < 10 ? 10 : _setting.Interval));
             }
