@@ -28,7 +28,7 @@ public class VehicleInfo
     /// </summary>
     public long Handle { get; }
     /// <summary>
-    /// 车牌识别号码
+    /// 车牌识别号码 格式为 新A515MG_0 
     /// </summary>
     public string VehicleId { get; set; }
     /// <summary>

@@ -5,17 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>annotations</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Company>IoTSharp;麦壳饼</Company>
+    <Company>IoTSharp</Company>
     <Product>IoTSharp</Product>
     <Description>车牌识别C#包装程序，需要厂家提供支持。</Description>
     <PackageProjectUrl>https://gitee.com/iotsharp</PackageProjectUrl>
+    <Version>1.0.5</Version>
+    <Copyright>Copyright © 2022 IoTSharp. All rights reserved. </Copyright>
+
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitVersion.MsBuild" Version="5.10.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
