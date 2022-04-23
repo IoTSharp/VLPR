@@ -9,6 +9,8 @@ public class VLPRService : BackgroundService
     public VLPRService(IOptions<VLPROptions> options, VLPRClient client)
     {
         _setting = options.Value;
+        _client = client;
+        _client.HCapture = Capture;
         if (_setting.EasyVLPR)
         {
             _setting.VLPRConfigs.ForEach(cfg =>
@@ -27,8 +29,7 @@ public class VLPRService : BackgroundService
                 _vprs.Add(cfg, vlpr);
             });
         }
-        _client = client;
-        _client.HCapture = Capture;
+      
     }
   
     private bool Capture(string name)
