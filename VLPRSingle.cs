@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Net.Sockets;
 using System.Net;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// 单实例车牌识别
@@ -12,6 +13,7 @@ internal class VLPRSingle : IDisposable, IVLPR
 {
     private string _lib = "libvlpr.so";
     private IntPtr _dllHnd;
+    private readonly ILogger _logger;
 #pragma warning disable 0649
     public _VPR_Init VPR_Init;
     public _VPR_InitEx VPR_InitEx;
@@ -38,11 +40,12 @@ internal class VLPRSingle : IDisposable, IVLPR
     public delegate int _VPR_SetEventCallBackFunc(VPR_EventHandle cb);
 
     private VPR_EventHandle eventHandle = null;
-    public VLPRSingle(VLPRConfig setting)
+    public VLPRSingle(VLPRConfig setting, ILogger logger)
     {
         _lib = setting.Provider;
         _setting = setting;
         _dllHnd = NativeLibrary.Load(_lib);
+        _logger = logger;
         if (_dllHnd != IntPtr.Zero)
         {
             NativeLibrary.LinkAllDelegates(this, _dllHnd);

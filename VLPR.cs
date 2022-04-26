@@ -5,12 +5,14 @@ using System.IO;
 using System.Net.Sockets;
 using System.Net;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// 多车牌识别
 /// </summary>
 internal class VLPR : IDisposable, IVLPR
 {
+    private readonly ILogger _logger;
     private string _lib = "libvlpr.so";
 
     private IntPtr _dllHnd;
@@ -42,16 +44,15 @@ internal class VLPR : IDisposable, IVLPR
     public delegate int _VPR_SetEventCallBackFunc(long handle,VPR_EventHandle cb, IntPtr userData);
 
     private VPR_EventHandle eventHandle = null;
-    public VLPR(VLPRConfig setting)
+    public VLPR(VLPRConfig setting, ILogger logger)
     {
+        _logger = logger;
         _lib = setting.Provider;
         _setting = setting;
-          _ipaddress = Marshal.StringToCoTaskMemAnsi(_setting.IPAddress);
-          _username = Marshal.StringToCoTaskMemAnsi(_setting.UserName);
-          _password = Marshal.StringToCoTaskMemAnsi(_setting.Password);
-          _name = Marshal.StringToCoTaskMemAnsi(_setting.Name);
-      
-
+        _ipaddress = Marshal.StringToHGlobalAnsi(_setting.IPAddress);
+        _username = Marshal.StringToHGlobalAnsi(_setting.UserName);
+        _password = Marshal.StringToHGlobalAnsi(_setting.Password);
+        _name = Marshal.StringToHGlobalAnsi(_setting.Name);
     }
 
     public string Name { get => _setting.Name; }
@@ -64,32 +65,32 @@ internal class VLPR : IDisposable, IVLPR
         {
             NativeLibrary.LinkAllDelegates(this, _dllHnd);
             eventHandle = new VPR_EventHandle(EventHandle);
-            Console.Write("加载动态库成功");
+            _logger?.LogInformation("加载动态库成功");
         }
         else
         {
-            Console.Write($"无法加载{_lib}");
+            _logger?.LogError ($"无法加载{_lib}");
         }
         if (_dllHnd != IntPtr.Zero && VPR_InitEx!=null && VPR_SetEventCallBackFunc!=null && VPR_GetVehicleInfo!=null && VPR_Capture!=null)
         {
-            Console.Write("开始初始化");
+            _logger?.LogInformation("开始初始化");
               Handle = VPR_InitEx(_ipaddress, _username, _password, 5000);
             int rest = 0;
             if (Handle > 1)
             {
-                Console.Write("初始化成功，开始设置回调");
+                _logger?.LogInformation("开始设置回调");
                 rest = VPR_SetEventCallBackFunc(Handle, eventHandle, _name);
-                Console.Write($"设置回调完成{rest}");
+                _logger?.LogInformation($"设置回调完成{rest}");
             }
             else
             {
-                Console.Write($"初始化失败{Handle}");
+                _logger?.LogError($"初始化失败{Handle}");
             }
             _isinit = Handle > 1 && rest >= 1;
         }
         else
         {
-            Console.Write($"关键函数未实现");
+            _logger?.LogError($"关键函数未实现");
         }
         return _isinit;
     }
@@ -105,11 +106,11 @@ internal class VLPR : IDisposable, IVLPR
         IntPtr piJpegLen = Marshal.AllocHGlobal(4);
         IntPtr iPlateColor = Marshal.AllocHGlobal(10);
         bool bRet = false;
-        Debug.WriteLine($"{Name}({Handle}，{handle})收到车牌");
+        _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌");
         bRet = VPR_GetVehicleInfo(Handle,chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
         if (bRet == true)
         {
-            Debug.WriteLine($"{Name}({Handle}，{handle})收到车牌{chPlate}");
+            _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌{chPlate}");
             int jpeglen = Marshal.ReadInt32(piJpegLen);
             int platecolor = Marshal.ReadByte(iPlateColor);
             int binlen = Marshal.ReadInt32(piBinLen);
@@ -125,7 +126,11 @@ internal class VLPR : IDisposable, IVLPR
             {
                 FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle));
             });
-            Debug.WriteLine($"{Name}({Handle}，{handle})时间触发完成");
+            _logger?.LogInformation($"{Name}({Handle}，{handle})时间触发完成");
+        }
+        else
+        {
+            _logger?.LogWarning($"收到车牌消息，但是获取车牌失败:{bRet}");
         }
         Marshal.FreeHGlobal(chImage);
         Marshal.FreeHGlobal(chTwo);
@@ -137,7 +142,7 @@ internal class VLPR : IDisposable, IVLPR
 
     public bool Capture()
     {
-        Debug.WriteLine($"{Name}({Handle})开始抓拍");
+        _logger?.LogInformation($"{Name}({Handle})开始抓拍");
         return VPR_Capture(Handle);
     }
     bool _isinit = false;
@@ -145,17 +150,17 @@ internal class VLPR : IDisposable, IVLPR
     public bool CheckStatus()
     {
         var check = false;
-        Debug.WriteLine($"{Name}({Handle})开始检查状态");
+        _logger?.LogInformation($"{Name}({Handle})开始检查状态");
         IntPtr ptrstatus = Marshal.AllocHGlobal(128);
         if (_dllHnd == IntPtr.Zero || !_isinit)
         {
-            Console.Write($"{Name}({Handle})未初始化");
+            _logger?.LogInformation($"{Name}({Handle})未初始化");
             Load();
         }
         if (VPR_CheckStatus != null)
         {
             check = VPR_CheckStatus(Handle, ptrstatus);
-            Debug.WriteLine($"{Name}({Handle})状态{check}");
+            _logger?.LogInformation($"{Name}({Handle})状态{check}");
             if (check == false)
             {
                 _isinit = false;
@@ -170,10 +175,10 @@ internal class VLPR : IDisposable, IVLPR
     }
     public void Dispose()
     {
-        Marshal.FreeCoTaskMem(_ipaddress);
-        Marshal.FreeCoTaskMem(_username);
-        Marshal.FreeCoTaskMem(_password);
-        Marshal.FreeCoTaskMem(_name);
+        Marshal.FreeHGlobal(_ipaddress);
+        Marshal.FreeHGlobal(_username);
+        Marshal.FreeHGlobal(_password);
+        Marshal.FreeHGlobal(_name);
         VPR_Quit(Handle);
         NativeLibrary.UnLoad(_dllHnd);
         FoundVehicle = null;
