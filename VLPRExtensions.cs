@@ -27,7 +27,7 @@ namespace System.Text
     {
         internal static string RemoveNull(this string str)
         {
-            return str?.Trim('\0', ' ');
+            return str?.Replace("\0","").Trim('\0', ' ').Trim(Environment.NewLine.ToArray()).Trim();
         }
     }
 }

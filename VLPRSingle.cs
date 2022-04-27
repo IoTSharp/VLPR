@@ -96,8 +96,8 @@ internal class VLPRSingle : IDisposable, IVLPR
             int jpeglen = Marshal.ReadInt32(piJpegLen);
             int platecolor = Marshal.ReadByte(iPlateColor);
             int binlen = Marshal.ReadInt32(piBinLen);
-            byte[] buffer = new byte[10];
-            Marshal.Copy(chPlate, buffer, 0, 10);
+            byte[] buffer = new byte[14];
+            Marshal.Copy(chPlate, buffer, 0, 14);
             var plate = System.Text.Encoding.GetEncoding(936).GetString(buffer).RemoveNull();
             byte[] imgbuff = new byte[jpeglen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
