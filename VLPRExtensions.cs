@@ -18,5 +18,16 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddHostedService<VLPRService>();
             services.AddSingleton<VLPRClient>();
         }
+     
+    }
+}
+namespace System.Text
+{
+    internal static class StringExtensions
+    {
+        internal static string RemoveNull(this string str)
+        {
+            return str?.Trim('\0', ' ');
+        }
     }
 }

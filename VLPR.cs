@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 /// <summary>
 /// 多车牌识别
@@ -116,7 +117,7 @@ internal class VLPR : IDisposable, IVLPR
             int binlen = Marshal.ReadInt32(piBinLen);
             byte[] buffer = new byte[10];
             Marshal.Copy(chPlate, buffer, 0, 10);
-            var plate = System.Text.Encoding.GetEncoding(936).GetString(buffer);
+            var plate = Encoding.GetEncoding(936).GetString(buffer).RemoveNull();
             byte[] imgbuff = new byte[jpeglen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             byte[] twobuff = new byte[binlen];
