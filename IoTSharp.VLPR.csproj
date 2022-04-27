@@ -9,7 +9,7 @@
     <Product>IoTSharp</Product>
     <Description>车牌识别C#包装程序，需要厂家提供支持。</Description>
     <PackageProjectUrl>https://gitee.com/iotsharp</PackageProjectUrl>
-    <Version>1.0.10</Version>
+    <Version>1.0.12</Version>
     <Copyright>Copyright © 2022 IoTSharp. All rights reserved. </Copyright>
 
   </PropertyGroup>

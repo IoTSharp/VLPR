@@ -127,7 +127,7 @@ internal class VLPR : IDisposable, IVLPR
             {
                 FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle));
             });
-            _logger?.LogInformation($"{Name}({Handle}，{handle})时间触发完成");
+            _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发完成");
         }
         else
         {
