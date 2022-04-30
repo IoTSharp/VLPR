@@ -72,6 +72,7 @@ public class VLPROptions
 public class VLPRClient  
 {
     internal Func<string, bool> HCapture { get;  set; }
+    internal Func<string, bool> HCheckStatus { get; set; }
     /// <summary>
     /// 抓拍
     /// </summary>
@@ -84,5 +85,14 @@ public class VLPRClient
     internal void Vlpr_FoundVehicle(object? sender, VehicleInfo e)
     {
         FoundVehicle?.Invoke(sender, e);
+    }
+    /// <summary>
+    /// 检查状态
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public bool CheckStatus(string name)
+    {
+        return (bool)HCheckStatus?.Invoke(name);
     }
 }

@@ -18,6 +18,7 @@ public class VLPRService : BackgroundService
         _setting = options.Value;
         _client = client;
         _client.HCapture = Capture;
+        _client.HCheckStatus = CheckStatus;
         _scope = scopeFactor.CreateScope();
          _loggerFactory =  _scope.ServiceProvider.GetService<ILoggerFactory>();
         _logger = _loggerFactory?.CreateLogger<VLPRService>();
@@ -41,7 +42,32 @@ public class VLPRService : BackgroundService
         }
       
     }
-  
+
+    private bool CheckStatus(string name)
+    {
+        bool result = false;
+        _logger?.LogInformation($"准备调用CheckStatus{name}");
+        if (_vprs.Any(f => f.Key.Name == name))
+        {
+            var cmp = _vprs.First(f => f.Key.Name == name).Value;
+            if (cmp != null)
+            {
+                result = cmp.CheckStatus();
+                _logger?.LogInformation($"名称为{name}CheckStatus结果{result}");
+            }
+            else
+
+            {
+                _logger?.LogWarning($"名称为{name}的相机值为空");
+            }
+        }
+        else
+        {
+            _logger?.LogWarning($"没有找到名称为{name}的相机");
+        }
+        return result;
+    }
+
     private bool Capture(string name)
     {
         bool result=false;
