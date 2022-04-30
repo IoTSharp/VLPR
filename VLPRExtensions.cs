@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -27,7 +27,7 @@ namespace System.Text
     {
         internal static string RemoveNull(this string str)
         {
-            return str?.Replace("\0","").Trim('\0', ' ').Trim(Environment.NewLine.ToArray()).Trim();
+            return Regex.Replace(str, @"[\x01-\x1F,\x7F,' ','\0']", ""); 
         }
     }
 }
