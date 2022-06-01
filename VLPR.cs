@@ -125,6 +125,7 @@ internal class VLPR : IDisposable, IVLPR
             Marshal.Copy(chTwo, twobuff, 0, binlen);
             Task.Run(() =>
             {
+                _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发");
                 FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle));
             });
             _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发完成");
