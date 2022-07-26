@@ -75,7 +75,7 @@ internal class VLPR : IDisposable, IVLPR
         if (_dllHnd != IntPtr.Zero && VPR_InitEx!=null && VPR_SetEventCallBackFunc!=null && VPR_GetVehicleInfo!=null && VPR_Capture!=null)
         {
             _logger?.LogInformation("开始初始化");
-              Handle = VPR_InitEx(_ipaddress, _username, _password, 5000);
+              Handle = VPR_InitEx(_ipaddress, _username, _password, _setting.Port);
             int rest = 0;
             if (Handle > 1)
             {
