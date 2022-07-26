@@ -108,25 +108,31 @@ internal class VLPR : IDisposable, IVLPR
         IntPtr iPlateColor = Marshal.AllocHGlobal(10);
         bool bRet = false;
         _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌");
-        bRet = VPR_GetVehicleInfo(Handle,chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
+        bRet = VPR_GetVehicleInfo(Handle, chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
         if (bRet)
         {
             _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌{chPlate}");
+            byte[] imgbuff = new byte[0];
             int jpeglen = Marshal.ReadInt32(piJpegLen);
+            if (jpeglen > 0)
+            {
+                imgbuff = new byte[jpeglen];
+                Marshal.Copy(chImage, imgbuff, 0, jpeglen);
+            }
             int platecolor = Marshal.ReadByte(iPlateColor);
             int binlen = Marshal.ReadInt32(piBinLen);
+            byte[] twobuff = new byte[0]; ;
+            if (binlen > 0)
+            {
+                twobuff = new byte[binlen];
+                Marshal.Copy(chTwo, twobuff, 0, binlen);
+            }
             byte[] buffer = new byte[10];
             Marshal.Copy(chPlate, buffer, 0, 10);
             var plate = Encoding.GetEncoding(936).GetString(buffer).RemoveNull();
-            byte[] imgbuff = new byte[jpeglen];
-            Marshal.Copy(chImage, imgbuff, 0, jpeglen);
-            byte[] twobuff = new byte[binlen];
-            Marshal.Copy(chImage, imgbuff, 0, jpeglen);
-            Marshal.Copy(chTwo, twobuff, 0, binlen);
             Task.Run(() =>
             {
                 _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发");
-                
                 FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle));
             });
             _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发完成");
