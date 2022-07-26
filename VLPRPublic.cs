@@ -57,6 +57,7 @@ public class VLPROptions
     /// 车牌识别配置列表
     /// </summary>
     public  List<VLPRConfig> VLPRConfigs { get; set; } = new List<VLPRConfig>();
+ 
     /// <summary>
     /// 检查车牌识别状态的时间间隔
     /// </summary>
@@ -67,6 +68,10 @@ public class VLPROptions
     /// </summary>
     public bool EasyVLPR { get; set; } = false;
 
+    /// <summary>
+    /// 车道和摄像机映射关系 用来支持一个摄像机多个车道
+    /// </summary>
+    public Dictionary<int, string> Lanes { get; set; }= new Dictionary<int, string>();
 }
 
 public class VLPRClient  

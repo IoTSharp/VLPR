@@ -14,7 +14,7 @@ using System.Text;
 internal class VLPR : IDisposable, IVLPR
 {
     private readonly ILogger _logger;
-    private string _lib = "libvlpr.so";
+    private readonly string _lib;
 
     private IntPtr _dllHnd;
 #pragma warning disable 0649
@@ -27,10 +27,10 @@ internal class VLPR : IDisposable, IVLPR
     public _VPR_SetEventCallBackFunc VPR_SetEventCallBackFunc;
 #pragma warning restore 0649
     private readonly VLPRConfig _setting;
-    private   IntPtr _ipaddress;
-    private   IntPtr _username;
-    private   IntPtr _password;
-    private IntPtr _name;
+    private readonly IntPtr _ipaddress;
+    private readonly IntPtr _username;
+    private readonly IntPtr _password;
+    private readonly IntPtr _name;
     public delegate long  _VPR_Init(int uPort, int nHWYPort, IntPtr chDevIp);
     public delegate long  _VPR_InitEx(IntPtr capIpAddress, IntPtr username, IntPtr password, int uPort);
     public delegate long _VPR_Quit(long handle);
@@ -109,7 +109,7 @@ internal class VLPR : IDisposable, IVLPR
         bool bRet = false;
         _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌");
         bRet = VPR_GetVehicleInfo(Handle,chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
-        if (bRet == true)
+        if (bRet)
         {
             _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌{chPlate}");
             int jpeglen = Marshal.ReadInt32(piJpegLen);
