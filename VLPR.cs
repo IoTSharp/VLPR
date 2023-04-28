@@ -18,31 +18,32 @@ internal class VLPR : IDisposable, IVLPR
 
     private IntPtr _dllHnd;
 #pragma warning disable 0649
-    public _VPR_Init VPR_Init;
+ 
     public _VPR_InitEx VPR_InitEx;
     public _VPR_Quit VPR_Quit;
-    public _VPR_Capture VPR_Capture;
-    public _VPR_GetVehicleInfo VPR_GetVehicleInfo;
+    public _VPR_CaptureEx VPR_CaptureEx;
+    public _VPR_GetVehicleInfoEx VPR_GetVehicleInfoEx;
     public _VPR_CheckStatus VPR_CheckStatus;
     public _VPR_SetEventCallBackFunc VPR_SetEventCallBackFunc;
+
 #pragma warning restore 0649
     private readonly VLPRConfig _setting;
     private readonly IntPtr _ipaddress;
     private readonly IntPtr _username;
     private readonly IntPtr _password;
     private readonly IntPtr _name;
-    public delegate long  _VPR_Init(int uPort, int nHWYPort, IntPtr chDevIp);
+
     public delegate long  _VPR_InitEx(IntPtr capIpAddress, IntPtr username, IntPtr password, int uPort);
     public delegate long _VPR_Quit(long handle);
 
-    public delegate bool _VPR_Capture(long handle);
+    public delegate bool _VPR_CaptureEx(long handle ,int laneId, int index);
 
-    public delegate bool _VPR_GetVehicleInfo(long handle,IntPtr pchPlate, IntPtr iPlateColor, IntPtr piByteBinImagLen, IntPtr pByteBinImage, IntPtr piJpegImageLen, IntPtr pByteJpegImage);
+    public delegate bool _VPR_GetVehicleInfoEx(long handle,IntPtr pchPlate, IntPtr iPlateColor, IntPtr piByteBinImagLen, IntPtr pByteBinImage, IntPtr piJpegImageLen, IntPtr pByteJpegImage, IntPtr laneId, IntPtr index);
 
     public delegate bool _VPR_CheckStatus(long handle,IntPtr chVprDevStatus);
     public delegate void VPR_EventHandle(long handle,IntPtr userData);
 
-    public delegate int _VPR_SetEventCallBackFunc(long handle,VPR_EventHandle cb, IntPtr userData);
+    public delegate int _VPR_SetEventCallBackFunc(long handle,VPR_EventHandle c, IntPtr userDatab);
 
     private VPR_EventHandle eventHandle = null;
     public VLPR(VLPRConfig setting, ILogger logger)
@@ -72,7 +73,7 @@ internal class VLPR : IDisposable, IVLPR
         {
             _logger?.LogError ($"无法加载{_lib}");
         }
-        if (_dllHnd != IntPtr.Zero && VPR_InitEx!=null && VPR_SetEventCallBackFunc!=null && VPR_GetVehicleInfo!=null && VPR_Capture!=null)
+        if (_dllHnd != IntPtr.Zero && VPR_InitEx!=null && VPR_SetEventCallBackFunc!=null && VPR_GetVehicleInfoEx!=null && VPR_CaptureEx!=null && VPR_CheckStatus != null)
         {
             _logger?.LogInformation("开始初始化");
               Handle = VPR_InitEx(_ipaddress, _username, _password, _setting.Port);
@@ -106,9 +107,11 @@ internal class VLPR : IDisposable, IVLPR
         IntPtr piBinLen = Marshal.AllocHGlobal(4);
         IntPtr piJpegLen = Marshal.AllocHGlobal(4);
         IntPtr iPlateColor = Marshal.AllocHGlobal(10);
+        IntPtr laneId = Marshal.AllocHGlobal(4);
+        IntPtr index = Marshal.AllocHGlobal(4);
         bool bRet = false;
         _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌");
-        bRet = VPR_GetVehicleInfo(Handle, chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage);
+        bRet = VPR_GetVehicleInfoEx(Handle, chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage,laneId,index);
         if (bRet)
         {
             _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌{chPlate}");
@@ -121,6 +124,8 @@ internal class VLPR : IDisposable, IVLPR
             }
             int platecolor = Marshal.ReadByte(iPlateColor);
             int binlen = Marshal.ReadInt32(piBinLen);
+            int _laneId = Marshal.ReadInt32(laneId);
+            int _index = Marshal.ReadInt32(index);
             byte[] twobuff = new byte[0]; ;
             if (binlen > 0)
             {
@@ -133,7 +138,7 @@ internal class VLPR : IDisposable, IVLPR
             Task.Run(() =>
             {
                 _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发");
-                FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle));
+                FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle,_laneId,_index));
             });
             _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发完成");
         }
@@ -147,12 +152,15 @@ internal class VLPR : IDisposable, IVLPR
         Marshal.FreeHGlobal(piBinLen);
         Marshal.FreeHGlobal(piJpegLen);
         Marshal.FreeHGlobal(iPlateColor);
+        Marshal.FreeHGlobal(laneId);
+        Marshal.FreeHGlobal(index);
     }
+    public bool Capture() => Capture(0, 0);
 
-    public bool Capture()
+    public bool Capture(int laneId,int index)
     {
         _logger?.LogInformation($"{Name}({Handle})开始抓拍");
-        return VPR_Capture(Handle);
+        return VPR_CaptureEx(Handle,laneId,index);
     }
     bool _isinit = false;
 

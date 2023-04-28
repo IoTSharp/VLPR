@@ -104,7 +104,7 @@ internal class VLPRSingle : IDisposable, IVLPR
             byte[] twobuff = new byte[binlen];
             Marshal.Copy(chImage, imgbuff, 0, jpeglen);
             Marshal.Copy(chTwo, twobuff, 0, binlen);
-            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff,Name, Environment.CurrentManagedThreadId) );
+            FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff,Name, Environment.CurrentManagedThreadId,0,0) );
         }
         Marshal.FreeHGlobal(chImage);
         Marshal.FreeHGlobal(chTwo);
@@ -145,5 +145,10 @@ internal class VLPRSingle : IDisposable, IVLPR
         NativeLibrary.UnLoad(_dllHnd);
         FoundVehicle = null;
         VPR_Quit();
+    }
+
+    public bool Capture(int laneid, int index)
+    {
+        return Capture();
     }
 }

@@ -6,6 +6,7 @@ internal interface IVLPR
 
     event EventHandler<VehicleInfo> FoundVehicle;
 
+    bool Capture(int laneid,int index);
     bool Capture();
     bool CheckStatus();
     void Dispose();

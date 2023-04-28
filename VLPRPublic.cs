@@ -10,13 +10,15 @@ public class VehicleInfo
     {
 
     }
-    internal VehicleInfo(string plate, byte[] imgbuff, byte[] twobuff, string name, long handle)
+    internal VehicleInfo(string plate, byte[] imgbuff, byte[] twobuff, string name, long handle, int laneId,int index)
     {
         VehicleId = plate;
         Image = imgbuff;
         TwoBin = twobuff;
         Name = name;
         Handle = handle;
+        LaneId = laneId;
+        Index = index;
     }
 
     /// <summary>
@@ -27,6 +29,9 @@ public class VehicleInfo
     /// 车牌识别句柄
     /// </summary>
     public long Handle { get; }
+    public int LaneId { get; }
+    public int Index { get; }
+
     /// <summary>
     /// 车牌识别号码 格式为 新A515MG_0 
     /// </summary>
