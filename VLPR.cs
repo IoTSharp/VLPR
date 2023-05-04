@@ -71,7 +71,7 @@ internal class VLPR : IDisposable, IVLPR
         }
         else
         {
-            _logger?.LogError ($"无法加载{_lib}");
+            _logger?.LogError ($"无法加载{_lib}{NativeLibrary.Error()}");
         }
         if (_dllHnd != IntPtr.Zero && VPR_InitEx!=null && VPR_SetEventCallBackFunc!=null && VPR_GetVehicleInfoEx!=null && VPR_CaptureEx!=null && VPR_CheckStatus != null)
         {

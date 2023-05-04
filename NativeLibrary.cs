@@ -24,6 +24,9 @@ internal static class NativeLibrary
     [DllImport("libdl.so")]
     private static extern IntPtr dlsym(IntPtr handle, string symbol);
 
+    [DllImport("libdl.so")]
+    private static extern IntPtr dlerror();
+
     const int RTLD_NOW = 2;
     #endregion
 
@@ -43,12 +46,38 @@ internal static class NativeLibrary
     #endregion
 
     #region Methods
+
+    public static string Error()
+    {
+        string _error = "unknow";
+        if (__linux__)
+        {
+            IntPtr errPtr = dlerror();
+            if (errPtr != IntPtr.Zero)
+            {
+                _error = Marshal.PtrToStringAnsi(errPtr);
+            }
+            else
+            {
+                _error = "";
+            }
+        }
+        else
+        {
+            _error = "not linux.";
+        }
+        return _error;
+    }
+ 
     public static IntPtr Load(string filename)
     {
         IntPtr mHnd;
 
         if (__linux__)
+        {
+            dlerror();      // clear previous errors if any
             mHnd = dlopen(filename, RTLD_NOW);
+        }
         else
             mHnd = LoadLibrary(filename);
 
