@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -17,8 +14,18 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddOptions<VLPROptions>().BindConfiguration(nameof(VLPROptions));
             services.AddHostedService<VLPRService>();
             services.AddSingleton<VLPRClient>();
+        
         }
-     
+        /// <summary>
+        /// 加入健康检查
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static IHealthChecksBuilder AddVLPR(this IHealthChecksBuilder builder,string name=null)
+        {
+            return builder.AddTypeActivatedCheck<VLPRHealthCheck>(name??"VLPR");
+        }
     }
 }
 namespace System.Text
