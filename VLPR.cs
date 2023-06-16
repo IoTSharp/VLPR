@@ -7,6 +7,7 @@ using System.Net;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// 多车牌识别
@@ -132,9 +133,9 @@ internal class VLPR : IDisposable, IVLPR
                 twobuff = new byte[binlen];
                 Marshal.Copy(chTwo, twobuff, 0, binlen);
             }
-            byte[] buffer = new byte[10];
-            Marshal.Copy(chPlate, buffer, 0, 10);
-            var plate = Encoding.GetEncoding(936).GetString(buffer).RemoveNull();
+            byte[] buffer = new byte[20];
+            Marshal.Copy(chPlate, buffer, 0, 20);
+            var plate = Encoding.GetEncoding(936).GetString(buffer)?.RemoveNull();
             Task.Run(() =>
             {
                 _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发");

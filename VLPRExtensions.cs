@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class VLPRExtensions
+    public static  class VLPRExtensions
     {
         /// <summary>
         /// 加入车牌识别服务
@@ -26,15 +26,10 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             return builder.AddTypeActivatedCheck<VLPRHealthCheck>(name??"VLPR");
         }
-    }
-}
-namespace System.Text
-{
-    internal static class StringExtensions
-    {
         internal static string RemoveNull(this string str)
         {
-            return Regex.Replace(str, @"[\x01-\x1F,\x7F,' ','\0']", ""); 
+            var _first_zero = string.IsNullOrEmpty(str) ? -1 : str.IndexOf('\0');
+            return _first_zero >= 0 ? str.Substring(0, _first_zero) : str;
         }
     }
 }
