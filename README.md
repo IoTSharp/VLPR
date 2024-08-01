@@ -1,5 +1,5 @@
 # IoTSharp.VLPR
-这是规定了接口标准的车牌识别封装库， 如果你要在项目里面对接车牌识别， 可以按下面的标准提供给厂家， 让厂家按照接口对接， 然后你只需要拷贝对应动态库到程序目录加载即可。
+这是一个用于.Net 的车牌识别对接框架库， 如果你要在项目里面对接车牌识别， 可以按项目提供的标准提供给厂家， 让厂家按照接口对接， 然后你只需要拷贝对应动态库到程序目录加载即可使用。 在我们内部， 已经有数家厂家进行了对接。
 
 
 
@@ -79,7 +79,7 @@ namespace Console1
 
 #### 1.2.2接口函数说明  ###             					                    
 
- ** VPR_InitEx  和  VPR_Init  至少实现其中一个，  在程序 dlsym 的时候 优先 VPR_InitEx ， ** 
+ ** VPR_InitEx   ** 
 
 - 	long VPR_InitEx(char* capIpAddress,char* username, char* password ,int uPort)`
 
