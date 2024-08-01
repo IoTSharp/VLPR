@@ -111,11 +111,9 @@ internal class VLPR : IDisposable, IVLPR
         IntPtr laneId = Marshal.AllocHGlobal(4);
         IntPtr index = Marshal.AllocHGlobal(4);
         bool bRet = false;
-        _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌");
         bRet = VPR_GetVehicleInfoEx(Handle, chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage,laneId,index);
         if (bRet)
         {
-            _logger?.LogInformation($"{Name}({Handle}，{handle})收到车牌{chPlate}");
             byte[] imgbuff = new byte[0];
             int jpeglen = Marshal.ReadInt32(piJpegLen);
             if (jpeglen > 0)
@@ -138,10 +136,16 @@ internal class VLPR : IDisposable, IVLPR
             var plate = Encoding.GetEncoding(936).GetString(buffer)?.RemoveNull();
             Task.Run(() =>
             {
-                _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发");
-                FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle,_laneId,_index));
+                try
+                {
+                    _logger?.LogInformation($"摄像机名称:{Name} 车道ID:{_laneId}({Handle}，{handle}) 车牌号码:{plate}_{platecolor}  顺序号:{_index}");
+                    FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle, _laneId, _index));
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex,"车牌识别事件触发错误");
+                }
             });
-            _logger?.LogInformation($"{Name}({Handle}，{handle})事件触发完成");
         }
         else
         {
