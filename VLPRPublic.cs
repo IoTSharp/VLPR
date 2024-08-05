@@ -54,6 +54,7 @@ public class VLPRConfig
     public string Password { get; set; }
     public string UserName { get; set; }
     public string Name { get; set; }
+    public int LaneId { get;  set; }
 }
 
 
@@ -82,15 +83,15 @@ public class VLPROptions
 
 public class VLPRClient  
 {
-    internal Func<string, bool> HCapture { get;  set; }
+    internal Func<int, int, bool> HCapture { get;  set; }
     internal Func<string, bool> HCheckStatus { get; set; }
     /// <summary>
     /// 抓拍
     /// </summary>
-    /// <param name="name">摄像机名称，这个是VLPRConfig中的名称 </param>
-    public bool  Capture(string name)
+    /// <param name="laneId">摄像机名称，这个是VLPRConfig中的Id </param>
+    public bool  Capture(int laneId, int index)
     {
-        return (bool)(HCapture?.Invoke(name));
+        return (bool)(HCapture?.Invoke(laneId,index));
     }
     public event EventHandler<VehicleInfo> FoundVehicle;
     internal void Vlpr_FoundVehicle(object? sender, VehicleInfo e)

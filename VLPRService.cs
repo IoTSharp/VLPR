@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
+using System.Xml.Linq;
 
 public class VLPRService : BackgroundService
 {
@@ -68,27 +69,29 @@ public class VLPRService : BackgroundService
         return result;
     }
 
-    private bool Capture(string name)
+    private bool Capture(int laneId,int  index)
     {
         bool result=false;
-        _logger?.LogInformation($"准备调用抓拍{name}");
-        if (_vprs.Any(f => f.Key.Name == name))
+      
+        if (_vprs.Any(f => f.Key.LaneId == laneId))
         {
-            var cmp = _vprs.First(f => f.Key.Name == name).Value;
+            var kv = _vprs.First(f => f.Key.LaneId == laneId);
+            _logger?.LogInformation($"准备调用抓拍{kv.Key.Name} Index:{index}");
+            var cmp =kv.Value;
             if (cmp != null)
             {
-                result= cmp.Capture();
-                _logger?.LogInformation($"名称为{name}抓拍调用结果{result}");
+                result= cmp.Capture(kv.Key.LaneId,index);
+                _logger?.LogInformation($"名称为{kv.Key.Name}抓拍调用{index}结果{result}");
             }
             else
 
             {
-                _logger?.LogWarning($"名称为{name}的相机值为空");
+                _logger?.LogWarning($"名称为{laneId}的相机值为空");
             }
         }
         else
         {
-            _logger?.LogWarning($"没有找到名称为{name}的相机");
+            _logger?.LogWarning($"没有找到名称为{laneId}的相机");
         }
         return result;
     }
