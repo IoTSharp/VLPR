@@ -8,7 +8,7 @@
     <Product>IoTSharp</Product>
     <Description>车牌识别C#包装程序，需要厂家提供支持。</Description>
     <PackageProjectUrl>https://github.com/IoTSharp/VLPR</PackageProjectUrl>
-    <Version>1.0.19</Version>
+    <Version>1.0.20</Version>
     <Copyright>Copyright © 2024 IoTSharp. All rights reserved. </Copyright>
     <Title>车牌识别接口</Title>
     <RepositoryUrl>https://github.com/IoTSharp/VLPR</RepositoryUrl>
@@ -29,6 +29,13 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

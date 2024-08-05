@@ -138,7 +138,7 @@ internal class VLPR : IDisposable, IVLPR
             {
                 try
                 {
-                    _logger?.LogInformation($"摄像机名称:{Name} 车道ID:{_laneId}({Handle}，{handle}) 车牌号码:{plate}_{platecolor}  顺序号:{_index}");
+                    _logger?.LogInformation($"摄像机名称:{Name} (句柄:{Handle}，{handle}) 车道ID:{_laneId} 序号:{_index} 车牌号码:{plate}_{platecolor}");
                     FoundVehicle?.Invoke(this, new VehicleInfo($"{plate}_{platecolor}", imgbuff, twobuff, Name, handle, _laneId, _index));
                 }
                 catch (Exception ex)
@@ -164,7 +164,7 @@ internal class VLPR : IDisposable, IVLPR
 
     public bool Capture(int laneId,int index)
     {
-        _logger?.LogInformation($"{Name}({Handle})开始抓拍");
+        _logger?.LogInformation($"摄像机名称:{Name}(句柄:{Handle}) 车道ID:{laneId}开始抓拍，序号{index}");
         return VPR_CaptureEx(Handle,laneId,index);
     }
     bool _isinit = false;
@@ -172,17 +172,17 @@ internal class VLPR : IDisposable, IVLPR
     public bool CheckStatus()
     {
         var check = false;
-        _logger?.LogInformation($"{Name}({Handle})开始检查状态");
+        _logger?.LogInformation($"摄像机名称:{Name}({Handle})开始检查状态");
         IntPtr ptrstatus = Marshal.AllocHGlobal(128);
         if (_dllHnd == IntPtr.Zero || !_isinit)
         {
-            _logger?.LogInformation($"{Name}({Handle})未初始化");
+            _logger?.LogInformation($"摄像机名称:{Name}({Handle})未初始化");
             Load();
         }
         if (VPR_CheckStatus != null)
         {
             check = VPR_CheckStatus(Handle, ptrstatus);
-            _logger?.LogInformation($"{Name}({Handle})状态{check}");
+            _logger?.LogInformation($"摄像机名称:{Name}({Handle})状态{check}");
             if (check == false)
             {
                 _isinit = false;
