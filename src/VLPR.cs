@@ -114,7 +114,7 @@ internal class VLPR : IDisposable, IVLPR
         bRet = VPR_GetVehicleInfoEx(Handle, chPlate, iPlateColor, piBinLen, chTwo, piJpegLen, chImage,laneId,index);
         if (bRet)
         {
-            byte[] imgbuff = new byte[0];
+            byte[] imgbuff = Array.Empty<byte>();
             int jpeglen = Marshal.ReadInt32(piJpegLen);
             if (jpeglen > 0)
             {
