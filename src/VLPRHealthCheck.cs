@@ -19,6 +19,10 @@ public class VLPRHealthCheck : IHealthCheck
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
         List<(string name, bool ok)> lst = new List<(string name, bool ok)>();
+        if (options.VLPRConfigs == null || options.VLPRConfigs.Count == 0)
+        {
+            return Task.FromResult(HealthCheckResult.Healthy("未配置本地VLPR设备"));
+        }
         options.VLPRConfigs.ForEach(config =>
         {
             var ok = client.CheckStatus(config.Name);
